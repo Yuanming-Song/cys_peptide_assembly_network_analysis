@@ -2,7 +2,7 @@
 
 This repository contains the core network-analysis scripts and compact result snapshots for coarse-grained molecular dynamics (CGMD) simulations of all single-cysteine-containing dipeptides, tripeptides, and tetrapeptides in the MARTINI 2.2 force field.
 
-The analysis compares peptide interaction networks derived from monomer assemblies and disulfide-stabilized dimer assemblies to quantify how self-assembly organization changes across states.
+The analysis compares peptide interaction networks derived from monomer assemblies and disulfide-stabilized dimer assemblies to quantify how self-assembly organization changes across assembly states. Throughout this repository, `state` refers specifically to the monomer state versus the disulfide-stabilized dimer state.
 
 ## Analysis Types
 
@@ -16,11 +16,11 @@ The analysis compares peptide interaction networks derived from monomer assembli
 - related prism/ribbon classes
 - `none` / `mixed` at the sequence-summary level
 
-For each peptide sequence and state, the script computes topology fractions across nodes. `scripts/topology_merge_from_pairs.R` then merges per-pair outputs into sequence-level summaries and topology plots.
+For each peptide sequence and each assembly state (monomer or disulfide-stabilized dimer), the script computes topology fractions across nodes. `scripts/topology_merge_from_pairs.R` then merges per-pair outputs into sequence-level summaries and topology plots.
 
 ### 2. Additional Network-State Analysis
 
-`scripts/additional_states_pair_analysis.R` computes complementary network-organization metrics that do not assign explicit structural classes, but instead describe how contacts are organized:
+`scripts/additional_states_pair_analysis.R` computes complementary network-organization metrics for the same two assembly states. These metrics do not assign explicit structural classes, but instead describe how contacts are organized:
 
 - assortativity
 - number of communities
@@ -44,7 +44,10 @@ The repo does not include cluster submission scripts or LaTeX report sources.
 
 ## Input Data
 
-Input edgelists are not bundled here. The expected source is the main project `Edgelist/` tree containing the paired monomer and disulfide-stabilized dimer network inputs.
+Input edgelists are not bundled here. The expected source is the main project `Edgelist/` tree containing paired inputs for each peptide sequence:
+
+- monomer assembly network
+- disulfide-stabilized dimer assembly network
 
 ## R Dependencies
 
@@ -60,7 +63,7 @@ Input edgelists are not bundled here. The expected source is the main project `E
 
 From the repository root:
 
-1. Run topology analysis for each paired monomer/dimer input.
+1. Run topology analysis for each paired monomer/dimer input pair.
 
 ```bash
 Rscript scripts/topology_pair_analysis.R \
@@ -74,7 +77,7 @@ Rscript scripts/topology_pair_analysis.R \
 RUN_TAG=<run_tag> Rscript scripts/topology_merge_from_pairs.R
 ```
 
-3. Run additional-states analysis for each paired monomer/dimer input.
+3. Run additional-states analysis for each paired monomer/dimer input pair.
 
 ```bash
 Rscript scripts/additional_states_pair_analysis.R \
@@ -108,7 +111,7 @@ These are small enough to keep under version control and are meant as ready-to-v
 
 ## Current High-Level Findings
 
-- In the topology assay, `none` and `double 1,2 2-ribbon` are the dominant sequence-level classes in both monomer and dimer states.
+- In the topology assay, `none` and `double 1,2 2-ribbon` are the dominant sequence-level classes in both assembly states: monomer and disulfide-stabilized dimer.
 - Monomer-to-dimer transitions are dominated by stable `none`, stable `double 1,2 2-ribbon`, and exchanges between those two states.
 - In the additional-state analysis, dimerization is associated with:
   - a small decrease in assortativity

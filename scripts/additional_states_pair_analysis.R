@@ -1,5 +1,8 @@
 #!/usr/bin/env Rscript
 
+# Compute paired monomer-vs-dimer network descriptors for each peptide sequence.
+# The output `state` column refers specifically to assembly state: monomer or dimer.
+
 required_packages <- c('readr','dplyr','igraph','network','orca')
 missing <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing) > 0) stop('Missing packages: ', paste(missing, collapse=', '))
@@ -20,6 +23,7 @@ dimer_file <- args[[2]]
 label <- args[[3]]
 out_csv <- args[[4]]
 
+# Load one serialized edgelist list; expected structure matches the topology pipeline inputs.
 load_edgelist <- function(path) {
   env <- new.env()
   load(path, envir = env)
@@ -29,6 +33,7 @@ load_edgelist <- function(path) {
   x
 }
 
+# Reduce each trajectory to the last available contact network and coerce to 2-column matrix form.
 last_frame <- function(x) {
   if (!is.list(x) || length(x) == 0) return(NULL)
   y <- x[[length(x)]]
@@ -38,6 +43,7 @@ last_frame <- function(x) {
   y[,1:2,drop=FALSE]
 }
 
+# Basic structural validation before graph metrics are attempted.
 validate_edge2 <- function(edge2, seq_name, state_name) {
   if (is.null(edge2)) {
     cat('SKIP_NULL', seq_name, state_name, '\n')
@@ -79,6 +85,8 @@ to_igraph <- function(edge2) {
   simplify(g)
 }
 
+# Core-periphery summary is approximated from k-core structure:
+# `core_max_k` is the maximum coreness value and `core_frac` is the fraction of nodes in that top core.
 core_periphery_score <- function(g) {
   cvec <- coreness(g)
   if (length(cvec) == 0) return(c(max_core = NA_real_, core_frac = NA_real_))
@@ -86,6 +94,8 @@ core_periphery_score <- function(g) {
   c(max_core = as.numeric(kmax), core_frac = mean(cvec == kmax))
 }
 
+# Graphlet-role summary collapses ORCA orbit counts into two scalars:
+# entropy for diversity of orbit usage and polarization for concentration into few roles.
 graphlet_polarization <- function(edge2) {
   # ORCA is strict: drop non-finite/invalid ids and require positive indices.
   edge2 <- edge2[complete.cases(edge2), , drop = FALSE]
@@ -107,6 +117,12 @@ graphlet_polarization <- function(edge2) {
   c(role_entropy = as.numeric(H), role_polarization = as.numeric(pol))
 }
 
+# Continuous metrics reported for each monomer or dimer assembly network:
+# - assortativity: degree-degree mixing
+# - modularity / n_communities: partition structure from Louvain clustering
+# - core_max_k / core_frac: strength and size of the highest k-core
+# - role_entropy / role_polarization: orbit-role diversity and concentration
+# - giant_component_frac: fraction of nodes in the largest connected component
 compute_metrics <- function(edge2) {
   g <- to_igraph(edge2)
   n <- vcount(g)
@@ -133,6 +149,7 @@ compute_metrics <- function(edge2) {
   mod <- NA_real_
   ncomm <- NA_real_
   if (m > 0 && n > 2) {
+    # Louvain community structure is used to summarize modular partitioning.
     cl <- cluster_louvain(g)
     mod <- modularity(cl)
     ncomm <- length(unique(membership(cl)))
@@ -161,7 +178,7 @@ dimer <- load_edgelist(dimer_file)
 common <- intersect(names(monomer), names(dimer))
 if (length(common) == 0) stop('No common sequences for ', label)
 
-# sanity and smoke test
+# Sanity check on one shared sequence before processing the full paired set.
 smoke <- common[[1]]
 sm_m <- last_frame(monomer[[smoke]])
 sm_d <- last_frame(dimer[[smoke]])
@@ -175,6 +192,7 @@ cat('SMOKE_OK', label, smoke, 'mon_assort=', sm_mx$assortativity, 'dim_assort=',
 rows <- vector('list', length(common) * 2)
 idx <- 1L
 for (s in common) {
+  # Metrics are computed independently for the monomer and dimer assembly states of the same sequence.
   mf <- last_frame(monomer[[s]])
   df <- last_frame(dimer[[s]])
 
@@ -192,7 +210,9 @@ for (s in common) {
 rows <- rows[seq_len(idx-1L)]
 out <- bind_rows(rows)
 
-# operational state flags (2-5)
+# Operational binary flags derived from the continuous descriptors above.
+# These are heuristic cutoffs used to summarize whether a network is
+# assortative, modular, core-periphery-like, or role-polarized.
 out <- out %>% mutate(
   state2_assortative = ifelse(!is.na(assortativity) & assortativity >= 0.10, 1L, 0L),
   state2_disassortative = ifelse(!is.na(assortativity) & assortativity <= -0.10, 1L, 0L),

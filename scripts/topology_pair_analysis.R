@@ -1,10 +1,12 @@
 #!/usr/bin/env Rscript
 
-# Analyze one consolidated monomer/dimer pair file and write per-sequence topology fractions.
+# Analyze one paired monomer/dimer input and write per-sequence topology fractions.
+# The output `state` column refers specifically to assembly state: monomer or dimer.
 
 script_path <- normalizePath(commandArgs(trailingOnly = FALSE)[grep("^--file=", commandArgs(trailingOnly = FALSE))])
 script_dir <- dirname(sub("^--file=", "", script_path))
 
+# Minimal package set: data IO, row-binding, and undirected network construction.
 required_packages <- c('dplyr', 'readr', 'network', 'orca')
 missing <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing) > 0) {
@@ -29,6 +31,8 @@ dimer_file <- args[[2]]
 label <- args[[3]]
 out_csv <- args[[4]]
 
+# Each input RDA stores a named list of sequences; each sequence contains a frame series.
+# The last frame is treated as the representative assembled network for that sequence/state.
 extract_last_frame <- function(x) {
   if (is.null(x)) return(NULL)
   if (!is.list(x) || length(x) == 0) return(NULL)
@@ -37,6 +41,7 @@ extract_last_frame <- function(x) {
   frame
 }
 
+# Normalize all edge inputs to a 2-column matrix so downstream network construction is consistent.
 normalize_edgelist <- function(edge) {
   if (is.null(edge)) return(NULL)
   if (is.data.frame(edge)) edge <- as.matrix(edge)
@@ -49,11 +54,15 @@ normalize_edgelist <- function(edge) {
 compute_fractions <- function(edge) {
   edge2 <- normalize_edgelist(edge)
   if (is.null(edge2)) return(NULL)
+  # Contacts are modeled as an undirected graph; directionality is not used here.
   net <- network(edge2, directed = FALSE)
+  # fibril_assay assigns node-level membership across ribbon/prism topology classes.
   membership <- fibril_assay(net)
+  # Sequence-level topology output is the mean node membership in each class.
   colMeans(membership)
 }
 
+# Load the serialized edgelist object and enforce the expected object name and type.
 load_edgelist_object <- function(rda_path) {
   if (!file.exists(rda_path)) stop('Missing input file: ', rda_path)
   env <- new.env()
@@ -81,7 +90,7 @@ common <- intersect(names(monomer), names(dimer))
 cat('Common sequences:', length(common), '\n')
 if (length(common) == 0) stop('No common sequences between monomer and dimer in ', label)
 
-# Smoke test before heavy loop
+# Smoke test before the full loop: fail early if the first shared pair cannot be scored.
 smoke_seq <- common[[1]]
 cat('Smoke test sequence:', smoke_seq, '\n')
 mon_frame <- extract_last_frame(monomer[[smoke_seq]])
@@ -96,6 +105,7 @@ records <- vector('list', length(common) * 2)
 idx <- 1L
 
 for (seq_name in common) {
+  # The same peptide sequence is scored independently in monomer and dimer assembly states.
   m_frame <- extract_last_frame(monomer[[seq_name]])
   d_frame <- extract_last_frame(dimer[[seq_name]])
 
@@ -129,6 +139,7 @@ for (seq_name in common) {
 records <- records[seq_len(idx - 1L)]
 if (length(records) == 0) stop('No valid topology records generated for ', label)
 
+# Final output is a long table: one row per sequence, state, and topology class.
 out_df <- bind_rows(records)
 out_dir <- dirname(out_csv)
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

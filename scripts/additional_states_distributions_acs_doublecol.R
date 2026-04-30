@@ -4,6 +4,7 @@ suppressPackageStartupMessages({
   library(dplyr)
 })
 
+# Build the publication-style comparison figure from the combined monomer/dimer metric table.
 script_path <- normalizePath(commandArgs(trailingOnly = FALSE)[grep("^--file=", commandArgs(trailingOnly = FALSE))])
 script_dir <- dirname(sub("^--file=", "", script_path))
 project_dir <- normalizePath(file.path(script_dir, '..'), mustWork = TRUE)
@@ -15,10 +16,13 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 if (!file.exists(input_csv)) stop('Missing combined metrics: ', input_csv)
 data <- read_csv(input_csv, show_col_types = FALSE)
 
+# Continuous metrics are shown as raw monomer-vs-dimer distributions and delta distributions.
 metrics_cont <- c('assortativity', 'n_communities', 'core_max_k', 'core_frac', 'role_entropy', 'role_polarization')
+# Binary panel retained in the figure: core-periphery flag.
 metrics_flag <- c('state4_core_periphery')
 metrics_plot <- c(metrics_cont, metrics_flag)
 
+# Collapse to one row per sequence/state in case any upstream file contributes duplicates.
 collapsed <- data %>%
   group_by(source_label, sequence, state) %>%
   summarize(across(all_of(c(metrics_cont, metrics_flag)), ~ mean(.x, na.rm = TRUE)), .groups = 'drop')
@@ -29,7 +33,7 @@ paired <- inner_join(mon, dim, by = c('source_label', 'sequence'), suffix = c('_
 
 if (nrow(paired) == 0) stop('No paired monomer/dimer rows found')
 
-# ACS double-column sizing
+# ACS double-column sizing for direct manuscript use.
 width_in <- 7.0
 height_in <- 10.5
 dpi <- 600
@@ -50,6 +54,7 @@ add_panel_label <- function(idx) {
 }
 
 for (m in metrics_plot) {
+  # Pair the monomer and dimer values sequence-by-sequence so delta = dimer - monomer.
   v_m <- paired[[paste0(m, '_mon')]]
   v_d <- paired[[paste0(m, '_dim')]]
   delta <- v_d - v_m
@@ -86,6 +91,7 @@ for (m in metrics_plot) {
   }
 
   if (m == 'core_max_k' || m == 'n_communities') {
+    # Integer-valued metrics are shown as discrete bar distributions rather than smoothed densities.
     xlab_raw <- if (m == 'n_communities') 'Number Of Communities' else 'Core Max-K'
     xlab_delta <- if (m == 'n_communities') 'Δ Number Of Communities' else 'Δ Core Max-K'
     bins <- sort(unique(c(v_m, v_d)))
@@ -128,6 +134,7 @@ for (m in metrics_plot) {
     next
   }
 
+  # Continuous metrics are shown as kernel density curves for monomer, dimer, and delta.
   dm <- density(v_m, na.rm = TRUE)
   dd <- density(v_d, na.rm = TRUE)
   ylim <- range(0, dm$y, dd$y)
