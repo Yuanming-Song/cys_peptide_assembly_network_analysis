@@ -27,13 +27,15 @@ if (run_tag == '') stop('RUN_TAG must be set')
 dir.create(report_dir, recursive=TRUE, showWarnings=FALSE)
 dir.create(plot_dir, recursive=TRUE, showWarnings=FALSE)
 
-# Each chunk file contains long-format topology fractions for one input pair label.
+# Each chunk file contains long-format topology fractions for one input pair label:
+# multiple sequences, 2 assembly states, and all topology classes.
 files <- list.files(chunk_dir, pattern=paste0('^topology_fractions_', run_tag, '_.*\\.csv$'), full.names=TRUE)
 if (length(files) == 0) stop('No pair output files found in ', chunk_dir)
 
 fractions_df <- bind_rows(lapply(files, read_csv, show_col_types = FALSE))
 
 # Dominant topology is the maximum-fraction class for a sequence within one assembly state.
+# If every fraction is zero, the sequence is labeled `none`.
 label_dominant <- function(df) {
   max_val <- max(df$fraction, na.rm = TRUE)
   if (is.na(max_val) || max_val <= 0) return('none')
@@ -48,12 +50,14 @@ dominant_df <- fractions_df %>%
   summarize(dominant = label_dominant(pick(everything())), .groups='drop')
 
 # Transition table compares the dominant monomer label to the dominant dimer label
-# for the same peptide sequence.
+# for the same peptide sequence, i.e. how the sequence-level topology summary changes
+# between assembly states.
 transitions <- dominant_df %>%
   pivot_wider(names_from = state, values_from = dominant) %>%
   filter(!is.na(monomer) & !is.na(dimer))
 
 transition_counts <- transitions %>% count(monomer, dimer, name='count') %>% arrange(desc(count))
+# `state_counts` is the per-state composition table used for dominant-topology bar plots.
 state_counts <- dominant_df %>% count(state, dominant, name='count') %>% group_by(state) %>% mutate(percent = 100*count/sum(count)) %>% ungroup()
 
 # Persist the merged tables so downstream plotting/reporting can reuse them directly.
