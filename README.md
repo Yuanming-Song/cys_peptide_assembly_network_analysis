@@ -1,6 +1,6 @@
 # CYS Peptide Assembly Network Analysis
 
-This directory is a clean, Git-ready subset of the peptide self-assembly analysis workflow. It keeps the essential full-data analysis scripts and report sources, and omits cluster submission wrappers, Giannmarc export/test files, and workspace-specific scratch outputs.
+This directory is a clean subset of the peptide self-assembly analysis workflow.
 
 ## What Is Included
 
@@ -21,27 +21,16 @@ This directory is a clean, Git-ready subset of the peptide self-assembly analysi
 - `report/`
   LaTeX report/manuscript sources and generated table fragments.
 
-## What Is Intentionally Omitted
-
-- SLURM submission scripts and `sbatch` wrappers.
-- `for_Giannmarc/` exports and older single-file/test pipelines.
-- Intermediate chunk outputs and job logs.
 
 ## Data Dependency
 
 Input data are not bundled here.
 
-The scripts expect the full edgelist dataset from the main project `Edgelist/` tree, not the Giannmarc export area. By default, `build_tet_manifest.R` looks for:
-
-- `../Edgelist/Tetrapeptide/SubData`
-
-relative to this directory.
-
-If your data live somewhere else, set:
+Set:
 
 - `PEPTIDE_DATA_ROOT=/path/to/Edgelist`
 
-before running the manifest builder.
+before running.
 
 ## R Package Requirements
 
@@ -55,7 +44,6 @@ Install these packages in the R library you plan to use:
 - `network`
 - `orca`
 
-The scripts no longer hard-code a local `.libPaths()`. They use whatever R environment is active when you run them.
 
 ## Directory Layout
 
