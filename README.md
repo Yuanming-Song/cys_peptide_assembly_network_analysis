@@ -1,40 +1,59 @@
 # CYS Peptide Assembly Network Analysis
 
-This directory is a clean subset of the peptide self-assembly analysis workflow.
+This repository contains the core analysis scripts for paired monomer/dimer peptide interaction networks from the CYS peptide screening project.
 
-## What Is Included
+## Analysis Types
+
+### 1. Topology Assay
+
+`scripts/topology_pair_analysis.R` applies the ORCA-based fibril topology assay used in the earlier Grazioli-Butts amyloid network work. It classifies node participation in motifs such as:
+
+- `1-ribbon`
+- `2-ribbon`
+- `double 1,2 2-ribbon`
+- related prism/ribbon classes
+- `none` / `mixed` at the sequence-summary level
+
+For each peptide sequence and state, the script computes topology fractions across nodes. `scripts/topology_merge_from_pairs.R` then merges per-pair outputs into sequence-level summaries and topology plots.
+
+### 2. Additional Network-State Analysis
+
+`scripts/additional_states_pair_analysis.R` computes complementary network-organization metrics that do not assign explicit structural classes, but instead describe how contacts are organized:
+
+- assortativity
+- number of communities
+- core max-k
+- core fraction
+- role entropy
+- role polarization
+- operational state flags such as core-periphery
+
+`scripts/additional_states_distributions_acs_doublecol.R` turns the combined output into a publication-style comparison figure.
+
+## Included Scripts
 
 - `scripts/topology_pair_analysis.R`
-  Computes per-sequence topology fractions from paired monomer/dimer edgelists using the ORCA-based fibril assay.
-- `scripts/fibril_assay.R`
-  Local copy of the topology classifier required by `topology_pair_analysis.R`.
 - `scripts/topology_merge_from_pairs.R`
-  Merges per-pair topology outputs into final CSV summaries and topology figures.
 - `scripts/additional_states_pair_analysis.R`
-  Computes additional network-state metrics from the same paired monomer/dimer edgelists.
 - `scripts/additional_states_distributions_acs_doublecol.R`
-  Builds the publication figure for additional-state metric distributions.
 - `scripts/build_tet_manifest.R`
-  Scans the tetrapeptide edgelist tree and builds the manifest of monomer/dimer subset pairs.
-- `scripts/finalize_publication_report.R`
-  Writes report tables and refreshes `report/manuscript.tex` from merged topology outputs.
-- `report/`
-  LaTeX report/manuscript sources and generated table fragments.
+- `scripts/fibril_assay.R`
 
+The repo does not include cluster submission scripts or LaTeX report sources.
 
-## Data Dependency
+## Input Data
 
-Input data are not bundled here.
+Input edgelists are not bundled here. The expected source is the main project `Edgelist/` tree.
 
 Set:
 
-- `PEPTIDE_DATA_ROOT=/path/to/Edgelist`
+```bash
+export PEPTIDE_DATA_ROOT=/path/to/Edgelist
+```
 
-before running.
+before running manifest generation.
 
-## R Package Requirements
-
-Install these packages in the R library you plan to use:
+## R Dependencies
 
 - `dplyr`
 - `readr`
@@ -44,84 +63,72 @@ Install these packages in the R library you plan to use:
 - `network`
 - `orca`
 
+## Minimal Workflow
 
-## Directory Layout
-
-- `report/chunks/`
-  Default location for per-pair topology CSV outputs before merge.
-- `plots/`
-  Default location for generated figures.
-- `plots/additional_states/`
-  Default location for additional-states figures.
-
-## Minimal Reproduction Flow
+From the repository root:
 
 1. Build the tetrapeptide manifest.
 
 ```bash
-Rscript cys_peptide_assembly_network_analysis/scripts/build_tet_manifest.R
+Rscript scripts/build_tet_manifest.R
 ```
 
-2. Run topology analysis once per manifest row.
+2. Run topology analysis for each paired monomer/dimer input.
 
 ```bash
-Rscript cys_peptide_assembly_network_analysis/scripts/topology_pair_analysis.R \
+Rscript scripts/topology_pair_analysis.R \
   <monomer_rda> <dimer_single_node_rda> <label> \
-  cys_peptide_assembly_network_analysis/report/chunks/topology_fractions_<run_tag>_<label>.csv
+  report/chunks/topology_fractions_<run_tag>_<label>.csv
 ```
 
-3. Merge topology outputs into final CSVs and topology plots.
+3. Merge topology outputs.
 
 ```bash
-RUN_TAG=<run_tag> Rscript cys_peptide_assembly_network_analysis/scripts/topology_merge_from_pairs.R
+RUN_TAG=<run_tag> Rscript scripts/topology_merge_from_pairs.R
 ```
 
-4. Run additional-states analysis once per manifest row.
+4. Run additional-states analysis for each paired monomer/dimer input.
 
 ```bash
-Rscript cys_peptide_assembly_network_analysis/scripts/additional_states_pair_analysis.R \
+Rscript scripts/additional_states_pair_analysis.R \
   <monomer_rda> <dimer_single_node_rda> <label> \
-  cys_peptide_assembly_network_analysis/report/additional_states/additional_states_metrics_<label>.csv
+  report/additional_states/additional_states_metrics_<label>.csv
 ```
 
-5. Combine additional-states per-pair CSVs into a single file named:
+5. Combine per-label additional-states CSVs into:
 
-- `cys_peptide_assembly_network_analysis/report/additional_states/additional_states_metrics_combined.csv`
+- `report/additional_states/additional_states_metrics_combined.csv`
 
-6. Generate the additional-states publication figure.
+6. Generate the publication figure for the additional-state analysis.
 
 ```bash
-Rscript cys_peptide_assembly_network_analysis/scripts/additional_states_distributions_acs_doublecol.R
+Rscript scripts/additional_states_distributions_acs_doublecol.R
 ```
 
-7. Refresh manuscript tables and generated manuscript text from topology outputs.
+## Included Results
 
-```bash
-Rscript cys_peptide_assembly_network_analysis/scripts/finalize_publication_report.R
-```
+This repo includes compact result snapshots under `results/`:
 
-## Environment Variables
+- `results/topology/dominant_topology_counts.csv`
+- `results/topology/transition_counts.csv`
+- `results/topology/topology_fraction_boxplots.png`
+- `results/topology/dominant_topology_counts.png`
+- `results/topology/topology_transition_heatmap.png`
+- `results/additional_states/summary_flags.csv`
+- `results/additional_states/additional_states_metric_distributions_ACS_doublecol.png`
 
-- `PEPTIDE_DATA_ROOT`
-  Root of the full `Edgelist/` dataset.
-- `RUN_TAG`
-  Required by `topology_merge_from_pairs.R` to select chunk outputs.
-- `TOPOLOGY_CHUNK_DIR`
-  Override default topology chunk input directory.
-- `TOPOLOGY_REPORT_DIR`
-  Override default report output directory.
-- `TOPOLOGY_PLOT_DIR`
-  Override default plot output directory.
-- `ADDITIONAL_STATES_INPUT`
-  Override path to `additional_states_metrics_combined.csv`.
-- `ADDITIONAL_STATES_PLOT_DIR`
-  Override output directory for the additional-states figure.
-- `TET_MANIFEST_OUT`
-  Override output path for the tetrapeptide manifest CSV.
+These are small enough to keep under version control and are meant as ready-to-view outputs. Large intermediate chunk files and full per-sequence raw outputs are not bundled.
 
-## Notes
+## Current High-Level Findings
 
-- `topology_pair_analysis.R` depends on `scripts/fibril_assay.R`, which is bundled here so this directory is self-contained at the code level.
-- `report/report.tex` and `report/manuscript.tex` expect figures under `plots/` relative to this directory structure.
-- If you later publish this as its own repository, this directory can be the repo root directly.
-# cys_peptide_assembly_network_analysis
+- In the topology assay, `none` and `double 1,2 2-ribbon` are the dominant sequence-level classes in both monomer and dimer states.
+- Monomer-to-dimer transitions are dominated by stable `none`, stable `double 1,2 2-ribbon`, and exchanges between those two states.
+- In the additional-state analysis, dimerization is associated with:
+  - a small decrease in assortativity
+  - an increase in community count
+  - a drop in core fraction
+  - an increase in role entropy
+  - a decrease in role polarization
+  - a modest increase in the core-periphery flag
+
+These additional metrics are best interpreted as network-organization descriptors rather than direct structural motif labels.

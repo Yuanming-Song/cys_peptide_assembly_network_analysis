@@ -1,0 +1,30 @@
+monomer,dimer,count
+none,none,8180
+"double 1,2 2-ribbon","double 1,2 2-ribbon",4736
+"double 1,2 2-ribbon",none,3977
+none,"double 1,2 2-ribbon",3956
+"1,2 2-ribbon","double 1,2 2-ribbon",3149
+mixed,"double 1,2 2-ribbon",880
+"1,2 2-ribbon",none,837
+"1,2 2-ribbon","1,2 2-ribbon",443
+1-ribbon,"1,2 2-ribbon",333
+mixed,none,324
+1-ribbon,"double 1,2 2-ribbon",300
+"1,2 2-ribbon",mixed,267
+"double 1,2 2-ribbon","1,2 2-ribbon",235
+none,"1,2 2-ribbon",211
+"double 1,2 2-ribbon",mixed,142
+1-ribbon,mixed,106
+mixed,"1,2 2-ribbon",102
+1-ribbon,1-ribbon,81
+none,mixed,71
+mixed,mixed,60
+1-ribbon,none,53
+none,1-ribbon,43
+"double 1,2 2-ribbon",1-ribbon,28
+"1,2 2-ribbon",1-ribbon,27
+mixed,1-ribbon,11
+"double 1,2 2-ribbon",2-ribbon,2
+"1,2 2-ribbon",2-ribbon,1
+2-ribbon,"double 1,2 2-ribbon",1
+none,2-ribbon,1
