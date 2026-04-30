@@ -1,6 +1,8 @@
 # CYS Peptide Assembly Network Analysis
 
-This repository contains the core analysis scripts for paired monomer/dimer peptide interaction networks from the CYS peptide screening project.
+This repository contains the core network-analysis scripts and compact result snapshots for coarse-grained molecular dynamics (CGMD) simulations of all single-cysteine-containing dipeptides, tripeptides, and tetrapeptides in the MARTINI 2.2 force field.
+
+The analysis compares peptide interaction networks derived from monomer assemblies and disulfide-stabilized dimer assemblies to quantify how self-assembly organization changes across states.
 
 ## Analysis Types
 
@@ -36,22 +38,13 @@ For each peptide sequence and state, the script computes topology fractions acro
 - `scripts/topology_merge_from_pairs.R`
 - `scripts/additional_states_pair_analysis.R`
 - `scripts/additional_states_distributions_acs_doublecol.R`
-- `scripts/build_tet_manifest.R`
 - `scripts/fibril_assay.R`
 
 The repo does not include cluster submission scripts or LaTeX report sources.
 
 ## Input Data
 
-Input edgelists are not bundled here. The expected source is the main project `Edgelist/` tree.
-
-Set:
-
-```bash
-export PEPTIDE_DATA_ROOT=/path/to/Edgelist
-```
-
-before running manifest generation.
+Input edgelists are not bundled here. The expected source is the main project `Edgelist/` tree containing the paired monomer and disulfide-stabilized dimer network inputs.
 
 ## R Dependencies
 
@@ -67,13 +60,7 @@ before running manifest generation.
 
 From the repository root:
 
-1. Build the tetrapeptide manifest.
-
-```bash
-Rscript scripts/build_tet_manifest.R
-```
-
-2. Run topology analysis for each paired monomer/dimer input.
+1. Run topology analysis for each paired monomer/dimer input.
 
 ```bash
 Rscript scripts/topology_pair_analysis.R \
@@ -81,13 +68,13 @@ Rscript scripts/topology_pair_analysis.R \
   report/chunks/topology_fractions_<run_tag>_<label>.csv
 ```
 
-3. Merge topology outputs.
+2. Merge topology outputs.
 
 ```bash
 RUN_TAG=<run_tag> Rscript scripts/topology_merge_from_pairs.R
 ```
 
-4. Run additional-states analysis for each paired monomer/dimer input.
+3. Run additional-states analysis for each paired monomer/dimer input.
 
 ```bash
 Rscript scripts/additional_states_pair_analysis.R \
@@ -95,11 +82,11 @@ Rscript scripts/additional_states_pair_analysis.R \
   report/additional_states/additional_states_metrics_<label>.csv
 ```
 
-5. Combine per-label additional-states CSVs into:
+4. Combine per-label additional-states CSVs into:
 
 - `report/additional_states/additional_states_metrics_combined.csv`
 
-6. Generate the publication figure for the additional-state analysis.
+5. Generate the publication figure for the additional-state analysis.
 
 ```bash
 Rscript scripts/additional_states_distributions_acs_doublecol.R
