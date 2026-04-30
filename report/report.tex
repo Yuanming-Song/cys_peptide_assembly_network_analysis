@@ -1,0 +1,42 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{natbib}
+\geometry{margin=1in}
+\begin{document}
+\title{Topology Analysis of Random Peptide Sequence Networks}
+\author{}
+\date{}
+\maketitle
+\section*{Methods}
+We analyzed monomer and dimer peptide interaction networks using a graphlet-orbit topology assay derived from prior amyloid fibril network classification work. The assay classifies nodes into fibril topology motifs (e.g., ribbon and prism classes) based on 5-node graphlet orbit counts computed with ORCA. For each sequence and state (monomer/dimer), we computed the fraction of nodes assigned to each topology class and used the dominant class (or `none`/`mixed`) as a sequence-level label. We then summarized topology distributions and monomer-to-dimer transitions. \citep{grazioli2019,grazioli2020,hocevar2016}.
+\section*{Results}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\linewidth]{../plots/topology_fraction_boxplots.png}
+\caption{Distribution of topology fractions across sequences in monomer and dimer states.}
+\end{figure}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\linewidth]{../plots/dominant_topology_counts.png}
+\caption{Dominant topology counts by state.}
+\end{figure}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.75\linewidth]{../plots/topology_transition_heatmap.png}
+\caption{Monomer-to-dimer transitions of dominant topology.}
+\end{figure}
+\input{dominant_topology_table}
+\input{transition_table}
+\section*{Additional States Metrics}
+We computed network-level organization metrics on the same monomer/dimer edgelists as complementary descriptors of self-assembly patterns. These metrics do not define explicit topology classes (e.g., 1-ribbon/2-ribbon); instead, they summarize connectivity structure and its changes between states. Assortativity captures degree-similarity in contacts (more assortative implies clustered, like-degree mixing). The number of communities summarizes interaction compartmentalization. Core statistics (core max-$k$ and core fraction) summarize the strength and size of the mutual-connectivity scaffold. Role entropy and role polarization summarize heterogeneity in graphlet-orbit roles. Operational state flags binarize these metrics to report how frequently networks are assortative, modular, core-periphery-like, or role-polarized.
+Across paired sequences, dimerization is associated with a small decrease in assortativity (median $\Delta=-0.018$), a rise in community count (median $\Delta=+1$), a marked reduction in core fraction (median $\Delta=-0.120$; core max-$k$ roughly stable), and a strong shift toward higher role entropy (median $\Delta=+0.307$) with lower role polarization (median $\Delta=-0.071$). Operational flags are largely unchanged for assortative/modular categories, while core-periphery flags increase modestly in the dimer state (mean $\Delta\approx+0.17$).
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.98\linewidth]{../plots/additional_states/additional_states_metric_distributions_ACS_doublecol.png}
+\caption{Additional-states metrics with panel labels (a--n). Left column: raw monomer vs dimer distributions. Right column: per-sequence changes (dimer minus monomer). Panels (a,b) assortativity; (c,d) number of communities; (e,f) core max-$k$; (g,h) core fraction; (i,j) role entropy; (k,l) role polarization; (m,n) core--periphery flag.}
+\end{figure}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}
