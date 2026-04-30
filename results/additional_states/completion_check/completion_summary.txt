@@ -1,0 +1,17 @@
+COMPLETION CHECK
+topology_latest_tag=run_20260217_221205
+additional_states_latest_tag=additional_states_fix_20260218_0040
+
+Expected theoretical totals:
+  dipeptide = 2*19 = 38
+  tripeptide = 3*19^2 = 1083
+  tetrapeptide total = 4*19^3 = 27436
+  one tetra subset = 19^2 = 361
+
+TOPOLOGY
+  expected_labels=78 observed_labels=78 missing_labels=0
+  total_sequences_observed=28557 expected_total=28557
+
+ADDITIONAL_STATES
+  expected_labels=78 observed_labels=78 missing_labels=0
+  total_sequences_observed=28557 expected_total=28557
